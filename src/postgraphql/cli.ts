@@ -5,6 +5,7 @@ import { readFileSync } from 'fs'
 import { createServer } from 'http'
 import chalk = require('chalk')
 import program = require('commander')
+import socketio = require('socket.io')
 import { parse as parsePgConnectionString } from 'pg-connection-string'
 import postgraphql from './postgraphql'
 
@@ -104,6 +105,8 @@ const pgConfig = Object.assign(
   { max: maxPoolSize },
 )
 
+const io = socketio()
+
 // Create’s our PostGraphQL server and provides all the appropriate
 // configuration options.
 const server = createServer(postgraphql(pgConfig, schemas, {
@@ -124,7 +127,10 @@ const server = createServer(postgraphql(pgConfig, schemas, {
   exportJsonSchemaPath,
   exportGqlSchemaPath,
   bodySizeLimit,
+  io,
 }))
+
+io.attach(server)
 
 // Start our server by listening to a specific port and host name. Also log
 // some instructions and other interesting information.

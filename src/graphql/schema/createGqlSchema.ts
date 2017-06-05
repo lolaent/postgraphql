@@ -1,8 +1,13 @@
-import { GraphQLSchema } from 'graphql'
+import {
+  GraphQLSchema,
+  GraphQLString,
+  GraphQLObjectType
+} from 'graphql'
 import { Inventory } from '../../interface'
 import BuildToken, { _BuildTokenHooks, _BuildTokenTypeOverrides } from './BuildToken'
 import getQueryGqlType from './getQueryGqlType'
 import getMutationGqlType from './getMutationGqlType'
+import getPgClientFromContext from '../../postgres/inventory/pgClientFromContext';
 
 export type SchemaOptions = {
   // Changes the name of the node field id on the node interface. Relay 1,
@@ -41,8 +46,40 @@ export default function createGqlSchema (inventory: Inventory, options: SchemaOp
     _typeOverrides: options._typeOverrides || new Map(),
   }
 
+  const query = getQueryGqlType(buildToken);
+  debugger;
+
+  const AddPostSubscriptionType = {
+    name: 'Subscription',
+    id: { type: GraphQLString },
+    resolve(source, args, context, info) {
+      const client = getPgClientFromContext(context);
+      debugger;
+    },
+    type: new GraphQLObjectType({
+      name: 'AddPostSubscriptionPayload',
+      fields: {
+        post: {
+          type: query._typeConfig.fields().post.type,
+          resolve(source, args, context, info) {
+            const client = getPgClientFromContext(context);
+            debugger;
+          }
+        }
+      }
+    })
+  }
+
+  const SubscriptionRootType = new GraphQLObjectType({
+    name: 'SubscriptionRoot',
+    fields: {
+      addPost: AddPostSubscriptionType
+    }
+  })
+
   return new GraphQLSchema({
-    query: getQueryGqlType(buildToken),
+    query,
     mutation: getMutationGqlType(buildToken),
+    subscription: SubscriptionRootType
   })
 }

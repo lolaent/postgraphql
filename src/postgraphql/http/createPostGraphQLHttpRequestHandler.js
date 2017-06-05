@@ -111,7 +111,7 @@ export default function createPostGraphQLHttpRequestHandler (options) {
 
   /**
    * The actual request handler. It’s an async function so it will return a
-   * promise when complete. If the function doesn’t handle anything, it calls
+   * promise when complete. If the function doesn't handle anything, it calls
    * `next` to let the next middleware try and handle it.
    *
    * @param {IncomingMessage} req
@@ -397,6 +397,7 @@ export default function createPostGraphQLHttpRequestHandler (options) {
         jwtAudiences: options.jwtAudiences,
         pgDefaultRole: options.pgDefaultRole,
         pgSettings,
+        io,
       }, context => {
         pgRole = context.pgRole
         return executeGraphql(

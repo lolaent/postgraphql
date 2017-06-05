@@ -1,6 +1,6 @@
 import React from 'react'
 import GraphiQL from 'graphiql'
-import { buildClientSchema, introspectionQuery, isType, GraphQLObjectType } from 'graphql'
+import { buildClientSchema, introspectionQuery, isType, GraphQLObjectType, parse } from 'graphql'
 
 const { POSTGRAPHQL_CONFIG } = window
 
@@ -53,21 +53,36 @@ class PostGraphiQL extends React.Component {
    * parameters. Namely a JWT which may be added as an `Authorization` header.
    */
   async executeQuery (graphQLParams, { jwtToken } = {}) {
-    const response = await fetch(POSTGRAPHQL_CONFIG.graphqlUrl, {
-      method: 'POST',
-      headers: Object.assign({
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      }, jwtToken ? {
-        'Authorization': `Bearer ${jwtToken}`,
-      } : {}),
-      credentials: 'same-origin',
-      body: JSON.stringify(graphQLParams),
-    })
+    const queryDoc = parse(graphQLParams.query);
 
-    const result = await response.json()
+    const isSub = (() => {
+      for (let def of queryDoc.definitions) {
+        if (def.kind === 'OperationDefinition') {
+          const op = def.operation;
+          if (op === 'subscription') return true;
+        }
+      }
 
-    return result
+      return false;
+    })();
+
+    if (!isSub) {
+      const response = await fetch(POSTGRAPHQL_CONFIG.graphqlUrl, {
+        method: 'POST',
+        headers: Object.assign({
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }, jwtToken ? {
+          'Authorization': `Bearer ${jwtToken}`,
+        } : {}),
+        credentials: 'same-origin',
+        body: JSON.stringify(graphQLParams),
+      })
+
+      return await response.json()
+    } else {
+      // pick up the socket io connection and set up a new LISTEN on the servers
+    }
   }
 
   /**

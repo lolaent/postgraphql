@@ -172,6 +172,16 @@ create function c.person_first_post(person c.person) returns a.post as $$ select
 create function c.compound_type_computed_field(compound_type c.compound_type) returns integer as $$ select compound_type.a + compound_type.foo_bar $$ language sql stable;
 create function a.post_headline_trimmed(post a.post, length int default 10, omission text default '…') returns text as $$ select substr(post.headline, 0, length) || omission $$ language sql stable;
 
+create function a.on_new_post() returns trigger as $$
+declare
+  begin
+    perform pg_notify('postgraphql', json_build_object('table', TG_TABLE_NAME,'type','insert', 'id', NEW.id)::text);
+    return new;
+  end;
+$$ language plpgsql;
+
+create trigger watch_new_posts after insert on a.post for each row execute procedure a.on_new_post();
+
 create type b.jwt_token as (
   role text,
   exp integer,
