@@ -2,7 +2,6 @@ import createDebugger = require('debug')
 import jwt = require('jsonwebtoken')
 import { Pool, Client } from 'pg'
 import { ExecutionResult } from 'graphql'
-import { SocketIO } from 'socket.io';
 import { sql } from '../postgres/utils'
 import { $$pgClient } from '../postgres/inventory/pgClientFromContext'
 
@@ -47,7 +46,7 @@ export default async function withPostGraphQLContext(
     jwtAudiences?: Array<string>,
     pgDefaultRole?: string,
     pgSettings?: { [key: string]: mixed },
-    io: SocketIO
+    io?: SocketIO.Server,
   },
   callback: (context: mixed) => Promise<ExecutionResult>,
 ): Promise<ExecutionResult> {

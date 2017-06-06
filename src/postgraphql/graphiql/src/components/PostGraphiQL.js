@@ -6,7 +6,7 @@ const { POSTGRAPHQL_CONFIG } = window
 
 /**
  * The standard GraphiQL interface wrapped with some PostGraphQL extensions.
- * Including a JWT setter and live schema udpate capabilities.
+ * Including a JWT setter and live schema update capabilities.
  */
 class PostGraphiQL extends React.Component {
   state = {
@@ -52,9 +52,11 @@ class PostGraphiQL extends React.Component {
    * Executes a GraphQL query with some extra information then the standard
    * parameters. Namely a JWT which may be added as an `Authorization` header.
    */
-  async executeQuery (graphQLParams, { jwtToken } = {}) {
+  executeQuery (graphQLParams, { jwtToken } = {}) {
     const queryDoc = parse(graphQLParams.query);
 
+    // Detect if the query contains a subscription.
+    // TODO: This wont allow for combination queries...
     const isSub = (() => {
       for (let def of queryDoc.definitions) {
         if (def.kind === 'OperationDefinition') {
@@ -67,7 +69,7 @@ class PostGraphiQL extends React.Component {
     })();
 
     if (!isSub) {
-      const response = await fetch(POSTGRAPHQL_CONFIG.graphqlUrl, {
+      return fetch(POSTGRAPHQL_CONFIG.graphqlUrl, {
         method: 'POST',
         headers: Object.assign({
           'Accept': 'application/json',
@@ -77,16 +79,20 @@ class PostGraphiQL extends React.Component {
         } : {}),
         credentials: 'same-origin',
         body: JSON.stringify(graphQLParams),
-      })
-
-      return await response.json()
+      }).then(result => result.json())
     } else {
-      // pick up the socket io connection and set up a new LISTEN on the servers
+      return {
+        subscribe: ({next, error, complete}) => {
+          next('Your subscription data will appear here');
+          window.thing = {next, error, complete};
+
+        }
+      };
     }
   }
 
   /**
-   * When we recieve an event signaling a change for the schema, we must rerun
+   * When we receive an event signalling a change for the schema, we must rerun
    * our introspection query and notify the user of the results.
    */
   // TODO: Send the introspection query results in the server sent event?

@@ -2,7 +2,6 @@ import { Pool, PoolConfig } from 'pg'
 import { parse as parsePgConnectionString } from 'pg-connection-string'
 import { GraphQLSchema } from 'graphql'
 import { EventEmitter } from 'events'
-import * as test from '@types/socket.io'
 import chalk = require('chalk')
 import createPostGraphQLSchema from './schema/createPostGraphQLSchema'
 import createPostGraphQLHttpRequestHandler, { HttpRequestHandler } from './http/createPostGraphQLHttpRequestHandler'
@@ -28,7 +27,7 @@ type PostGraphQLOptions = {
   exportGqlSchemaPath?: string,
   bodySizeLimit?: string,
   pgSettings?: { [key: string]: mixed },
-  io?: SocketIO,
+  io?: SocketIO.Server,
 }
 
 /**
@@ -105,7 +104,7 @@ export default function postgraphql (
         _emitter.emit('schemas:changed')
 
         // Actually restart the GraphQL schema by creating a new one. Note that
-        // `createGqlSchema` returns a promise and we aren’t ‘await’ing it.
+        // `createGqlSchema` returns a promise and we aren't ‘await’ing it.
         gqlSchema = createGqlSchema()
       },
     })

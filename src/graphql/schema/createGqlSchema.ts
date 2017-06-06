@@ -47,7 +47,6 @@ export default function createGqlSchema (inventory: Inventory, options: SchemaOp
   }
 
   const query = getQueryGqlType(buildToken);
-  debugger;
 
   const AddPostSubscriptionType = {
     name: 'Subscription',
